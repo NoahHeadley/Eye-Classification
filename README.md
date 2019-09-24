@@ -1,4 +1,4 @@
-#Usage#
+# Usage
 python face_detector.py --shape-detector=(your shape detector. Recommended: DLib's 68 feature) --image=(Your Input Image) --feature=(which face feature you want to extract)
 
 python face_extractor.py --shape-detector=(your shape detector) --feature=(which face feature you want to extract)
