@@ -75,6 +75,8 @@ def get_face_features(predictor, image, wanted_part):
         start_index, end_index = 36, 41
     elif(wanted_part == "right eye"):
         start_index, end_index = 42, 47
+    elif(wanted_part == "eyes"):
+        start_index, end_index = 36, 47
     elif(wanted_part == "lips"):
         start_index, end_index = 48, 67
     elif(wanted_part == "all"):
