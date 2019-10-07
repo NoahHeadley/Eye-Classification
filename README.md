@@ -1,3 +1,7 @@
+# Installation
+run
+> pip install -r requirements.txt
+
 # Usage
 > python face_detector.py --shape-detector=(your shape detector. Recommended: DLib's 68 feature) --image=(Your Input Image) --feature=(which face feature you want to extract)
 
@@ -22,3 +26,7 @@ wanted feature string must be from this set:
 "lips": Lips
 
 "all" : get all features
+
+> python eyes.py
+
+You can press the 'x' key at any time to stop the cycling

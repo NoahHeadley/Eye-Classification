@@ -40,7 +40,7 @@ def get_face_features(predictor, image, wanted_part):
 
     # load the input image, resize it, and convert to grayscale
     image = cv2.imread(image)
-    image = imutils.resize(image, width=500)
+    # image = imutils.resize(image, width=500)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # detect faces in the grayscale image
@@ -114,7 +114,7 @@ def get_face_features(predictor, image, wanted_part):
         # rotate the face
         M = cv2.getRotationMatrix2D(center, angle, 1.0)
         image_rotate = cv2.warpAffine(image, M, (img_h, img_w))
-        image_rotate = imutils.resize(image_rotate, width=500)
+        #image_rotate = imutils.resize(image_rotate, width=500)
 
         # Do calculations for faces again on the rotated face
         gray_rotate = cv2.cvtColor(image_rotate, cv2.COLOR_BGR2GRAY)
