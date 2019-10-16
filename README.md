@@ -3,9 +3,9 @@ run
 > pip install -r requirements.txt
 
 # Usage
-> python face_detector.py --shape-detector=(your shape detector. Recommended: DLib's 68 feature) --image=(Your Input Image) --feature=(which face feature you want to extract)
+> python face_detector.py --image=(Your Input Image) --feature=(which face feature you want to extract)
 
-> python face_extractor.py --shape-detector=(your shape detector) --feature=(which face feature you want to extract)
+> python face_extractor.py --feature=(which face feature you want to extract)
 
 face_extractor runs over every image in the faces folder whild face_detector only does that with a single image
 
@@ -29,4 +29,4 @@ wanted feature string must be from this set:
 
 > python eyes.py
 
-You can press the 'x' key at any time to stop the cycling
+You can press the 'x' key at any time to stop the cycling and the 'z' key to exclude an image from the final results

@@ -17,4 +17,3 @@ pygame==1.9.6
 pylint==2.3.1
 pywin32==224
 toolz==0.9.0
-torchvision==0.4.0

@@ -6,8 +6,8 @@ import numpy as np
 directory = os.fsencode("faces")
 collection = list(np.array(np.array((int, int))))
 ap = argparse.ArgumentParser()
-ap.add_argument("-p", "--shape-predictor", required=True,
-                help="path to facial landmark predictor")
+ap.add_argument("-p", "--shape-predictor", required=False,
+                help="path to facial landmark predictor", default="shape_predictor_194_face_landmarks.dat")
 ap.add_argument("-f", "--feature", required=True,
                 help="wanted face feature")
 args = vars(ap.parse_args())

@@ -11,8 +11,8 @@ import math
 
 def build_arg_parser():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-p", "--shape-predictor", required=True,
-                    help="path to facial landmark predictor")
+    ap.add_argument("-p", "--shape-predictor", required=False,
+                    help="path to facial landmark predictor", default="shape_predictor_194_face_landmarks.dat")
     ap.add_argument("-i", "--image", required=True,
                     help="path to input image")
     ap.add_argument("-f", "--feature", required=True,
@@ -48,41 +48,55 @@ def get_face_features(predictor, image, wanted_part):
     faces = 0
     for(i, rect) in enumerate(rects):
         faces += 1
-
-    get_all_features = False
     # list of wanted face values
     faces_landmarks_collector = list(np.array(np.array((int, int))))
 
     # range for face features are as follows
-    #  0 - 16: Shape of head from left temple to right temple
-    # 17 - 21: Left Eye Brow
-    # 22 - 26: Right Eye Brow
-    # 27 - 35: Shape of Nose
-    # 36 - 41: Left Eye
-    # 42 - 47: Right eye
-    # 48 - 59: Outer Lips
-    # 60 - 67: Inner Lips
+    #  0 - 10: Left Cheek
+    # 21, 32, 43, 54, 65, 76, 87, 98, 109 - annoyingly these are the rest of the left of the head
+    # 11 - 25: center of lips
+    # 26 - 47: Right Eye
+    # 48 - 69: Left Eye
+    # 70 - 91: Right Eyebrow
+    # 92 - 113: Left Eyebrow
+    # 114 - 134: Right side of head
+    # 135 - 152: Nose
+    # 153 - 193: Rest of lips
+
+    # So this means that head shape is [0:10] + [21,32, 43, 54, 65, 76, 87, 98, 109] + [114:134]
+    # also this means that all ranges with those annoying points need to exclude them
     wanted_part = str.lower(wanted_part)
+    annoying_points = [21, 32, 43, 54, 65, 76, 87, 98, 109]
+    wanted_list = []
+    head_list = [x for x in range(11)] + \
+        annoying_points + [x for x in range(114, 135)]
+    lip_list = [x for x in range(
+        11, 25) if x not in annoying_points] + [x for x in range(152, 194)]
+    r_eye_list = [x for x in range(26, 48) if x not in annoying_points]
+    l_eye_list = [x for x in range(48, 70) if x not in annoying_points]
+    r_eyebrow_list = [x for x in range(70, 92) if x not in annoying_points]
+    l_eyebrow_list = [x for x in range(92, 114) if x not in annoying_points]
+    nose_list = range(135, 152)
+    partnames_list = None
     if(wanted_part == "head"):
-        start_index, end_index = 0, 16
-    elif(wanted_part == "left eye brow"):
-        start_index, end_index = 17, 21
-    elif(wanted_part == "right eye brow"):
-        start_index, end_index = 22, 26
-    elif(wanted_part == "nose"):
-        start_index, end_index = 27, 35
-    elif(wanted_part == "left eye"):
-        start_index, end_index = 36, 41
-    elif(wanted_part == "right eye"):
-        start_index, end_index = 42, 47
-    elif(wanted_part == "eyes"):
-        start_index, end_index = 36, 47
+        wanted_list.append(head_list)
     elif(wanted_part == "lips"):
-        start_index, end_index = 48, 67
+        wanted_list.append(lip_list)
+    elif(wanted_part == "right eye"):
+        wanted_list.append(r_eye_list)
+    elif(wanted_part == "left eye"):
+        wanted_list.append(l_eye_list)
+    elif(wanted_part == "right eye brow"):
+        wanted_list.append(r_eyebrow_list)
+    elif(wanted_part == "left eye brow"):
+        wanted_list.append(l_eyebrow_list)
+    elif(wanted_part == "nose"):
+        wanted_list.append(nose_list)
     elif(wanted_part == "all"):
-        wanted_part = "head"
-        start_index, end_index = 0, 16
-        get_all_features = True
+        wanted_list = [head_list, lip_list, r_eye_list,
+                       l_eye_list, r_eyebrow_list, l_eyebrow_list, nose_list]
+        partnames_list = ["head", "lips", "right eye",
+                          "left eye", "right eye brow", "left eye brow", "nose"]
     else:
         print("""Input string must be one of the following
         "head": Shape of head from left temple to right temple
@@ -93,7 +107,7 @@ def get_face_features(predictor, image, wanted_part):
         "right eye": Right eye
         "lips": Lips
         "all" : get all features""")
-        start_index, end_index = 0, 67
+        return None
 
     # loop over detected faces
     for (i, rect) in enumerate(rects):
@@ -107,8 +121,8 @@ def get_face_features(predictor, image, wanted_part):
         (img_w, img_h) = image.shape[:2]
         center = (img_w/2, img_h/2)
 
-        # Shape 0 and 16 values are the sides of the head right under forehead
-        (ang_x, ang_y) = shape[0] - shape[16]
+        # Shape 0 and 134 values are the sides of the head right under forehead
+        (ang_x, ang_y) = shape[0] - shape[134]
         angle = math.atan(ang_y/ang_x) * 180/math.pi
 
         # rotate the face
@@ -120,7 +134,8 @@ def get_face_features(predictor, image, wanted_part):
         gray_rotate = cv2.cvtColor(image_rotate, cv2.COLOR_BGR2GRAY)
         rects_rotate = detector(gray_rotate)
         # adjust shape values to the rotated image
-        while(True):
+        while(wanted_list.__len__() > 0):
+            part_list = wanted_list.pop(0)
             shape = predictor(gray_rotate, rects_rotate[i])
             shape = face_utils.shape_to_np(shape)
             # values that will be used to find the perfect values for cropping face
@@ -128,13 +143,13 @@ def get_face_features(predictor, image, wanted_part):
             face_w, face_h = 0, 0
             # loop over the (x,y)-coordinates for the facial landmarks
             # and draw them on the image
-            for(x, y) in shape[start_index:end_index]:
+            for(x, y) in shape[part_list]:
                 # cv2.circle(image_rotate, (x, y), 1, (0, 0, 255), -1)
                 if(x < face_x):
                     face_x = x
                 if(y < face_y):
                     face_y = y
-            for(x, y) in shape[start_index:end_index]:
+            for(x, y) in shape[part_list]:
                 if(face_w < x - face_x):
                     face_w = x - face_x
                 if(face_h < y - face_y):
@@ -144,6 +159,8 @@ def get_face_features(predictor, image, wanted_part):
                                         face_h, face_x:face_x + face_w]
             # cv2.imshow("cropped {}".format(wanted_part), cropped_face)
             # cv2.waitKey(0)
+            if(partnames_list is not None):
+                wanted_part = partnames_list.pop(0)
             filename = "crops/{}".format(
                 wanted_part) + str(i) + "_{}".format(image_name[6:])
             cv2.imwrite(filename, cropped_face)
@@ -158,46 +175,14 @@ def get_face_features(predictor, image, wanted_part):
             # display an image of the wanted normalized values
 
             # norm_face_spots = cv2.imread("black.png")
-            for j in range(start_index, end_index):
+            for j in part_list:
                 (x, y) = shape[j]
                 # cv2.circle(norm_face_spots, (x, y), 1, (255, 255, 255), -1)
             #cv2.imshow("normalized", norm_face_spots)
 
             # Add the coordinates of all the wanted landmarks to a list
-            faces_landmarks_collector.append(shape[start_index:end_index])
+            faces_landmarks_collector.append(shape[part_list])
             # cv2.waitKey(0)
-
-            # if all features are wanted then cycle through the groups
-            if(not get_all_features):
-                break
-            if(wanted_part == "head"):
-                start_index, end_index = 17, 21
-                wanted_part = "left eye brow"
-                next
-            elif(wanted_part == "left eye brow"):
-                start_index, end_index = 22, 26
-                wanted_part = "right eye brow"
-                next
-            elif(wanted_part == "right eye brow"):
-                start_index, end_index = 27, 35
-                wanted_part = "nose"
-                next
-            elif(wanted_part == "nose"):
-                start_index, end_index = 36, 41
-                wanted_part = "left eye"
-                next
-            elif(wanted_part == "left eye"):
-                start_index, end_index = 42, 47
-                wanted_part = "right eye"
-                next
-            elif(wanted_part == "right eye"):
-                start_index, end_index = 48, 67
-                wanted_part = "lips"
-                next
-            # lips will be the last one, setting the wanted_part value to head just in case more faces are wanted
-            elif(wanted_part == "lips"):
-                wanted_part = "head"
-                break
 
     return faces_landmarks_collector
 

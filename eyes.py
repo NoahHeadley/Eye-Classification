@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 import os
 import keyboard
+from face_utils import normalize_circle
 
 
 directory = os.fsencode("crops")
@@ -31,7 +32,7 @@ def locate_iris(image):
     cv2.imshow("contours", threshold)
     for cnt in contours:
         (x, y, w, h) = cv2.boundingRect(cnt)
-        #cv2.drawContours(img, [cnt], -1, (0, 0, 255), 3)
+        # cv2.drawContours(img, [cnt], -1, (0, 0, 255), 3)
         cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
         break
     cv2.imshow("iris", img)
@@ -46,39 +47,64 @@ def hough_locate_iris(image):
     # Convert to gray-scale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # Blur image to reduce noise
-    img_blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    img_blur = cv2.GaussianBlur(gray, (7, 7), 0)
+
+    # _, threshold = cv2.threshold(img_blur, 100, 255, cv2.THRESH_BINARY_INV)
+    # contours, _ = cv2.findContours(
+    #     threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # Apply Hough Transform on the image
     circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, 1,
-                               img.shape[0]/64, param1=50, param2=10, minRadius=15, maxRadius=30)
+                               img.shape[0]/64, param1=50, param2=10, minRadius=15, maxRadius=23)
 
-    detected = False
+    radius = None
+    center = None
+    offset = None
     # Draw Detected Circles
     if circles is not None:
         detected = True
         circles = np.uint16(np.around(circles))
-        for i in circles[0, :1, ]:
+        for i in circles[0, : 1, ]:
+            # i[0] = x coordinate of center
+            # i[1] = y coordinate of center
+            # i[2] = radius of circle
+            center = (i[0], i[1])
+            radius = i[2]
             # Draw outer circle
-            cv2.circle(img, (i[0], i[1]), i[2], (0, 255, 0), 1)
+            cv2.circle(img, center, radius, (0, 255, 0), 1)
             # Draw inner circle
-            cv2.circle(img, (i[0], i[1]), 2, (0, 0, 255), 1)
+            # cv2.circle(img, center, 1, (0, 0, 255), 1)
         cv2.imshow("iris", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    return detected
+
+        center, radius, offset = normalize_circle(
+            img, center, radius, maxRadius=23, minRadius=15)
+    if center is not None:
+        return center, radius, offset
 
 
 if __name__ == '__main__':
-    #args = build_arg_parser()
-    #image = args["image"]
+    # args = build_arg_parser()
+    # image = args["image"]
+    iris = []
     num_counted = 0
+    rejects = 0
+    total = 0
     for file in os.listdir(directory):
+        total += 1
         filename = os.fsdecode(file)
         if filename.__contains__("eye") and not filename.__contains__("brow"):
-            if hough_locate_iris("crops/" + filename):
-                num_counted += 1
+            values = hough_locate_iris("crops/" + filename)
             if keyboard.is_pressed('x'):
                 break
-    print(num_counted)
+            if values is not None and not keyboard.is_pressed('z'):
+                iris.append(values)
+            else:
+                rejects += 1
+
+    print(iris)
+    if(rejects is not 0):
+        print(f"The number of rejects is {rejects} :(")
     # for file in os.listdir(directory2):
     #     filename = os.fsdecode(file)
     #     hough_locate_iris("faces/" + filename)
