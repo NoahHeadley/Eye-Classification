@@ -22,8 +22,8 @@ def build_arg_parser():
 
 def get_face_features(predictor, image, wanted_part):
     '''
-    Given input image and a pre-trained shape-detector, 
-    returns coordinates of facial landmarks of each detected face as coordinates with 
+    Given input image and a pre-trained shape-detector,
+    returns coordinates of facial landmarks of each detected face as coordinates with
     values from 0 to 1000
     predictor: a trained face detector (recommended to use dlibs 68 landmark detector)
     image: input image
@@ -128,7 +128,7 @@ def get_face_features(predictor, image, wanted_part):
         # rotate the face
         M = cv2.getRotationMatrix2D(center, angle, 1.0)
         image_rotate = cv2.warpAffine(image, M, (img_h, img_w))
-        #image_rotate = imutils.resize(image_rotate, width=500)
+        # image_rotate = imutils.resize(image_rotate, width=500)
 
         # Do calculations for faces again on the rotated face
         gray_rotate = cv2.cvtColor(image_rotate, cv2.COLOR_BGR2GRAY)
@@ -155,14 +155,16 @@ def get_face_features(predictor, image, wanted_part):
                 if(face_h < y - face_y):
                     face_h = y - face_y
             # crop out faces
-            cropped_face = image_rotate[face_y: face_y +
-                                        face_h, face_x:face_x + face_w]
+            cropped_face = image_rotate[face_y-10: face_y +
+                                        face_h+10, face_x-10:face_x + face_w+10]
             # cv2.imshow("cropped {}".format(wanted_part), cropped_face)
             # cv2.waitKey(0)
             if(partnames_list is not None):
                 wanted_part = partnames_list.pop(0)
-            filename = "crops/{}".format(
-                wanted_part) + str(i) + "_{}".format(image_name[6:])
+            out_directory = f"crops/{wanted_part}"
+            if not os.path.exists(out_directory):
+                os.makedirs(out_directory)
+            filename = out_directory + f"/{image_name[6:]}"
             cv2.imwrite(filename, cropped_face)
 
             # normalize images to be values from 0 to 1000
@@ -178,11 +180,10 @@ def get_face_features(predictor, image, wanted_part):
             for j in part_list:
                 (x, y) = shape[j]
                 # cv2.circle(norm_face_spots, (x, y), 1, (255, 255, 255), -1)
-            #cv2.imshow("normalized", norm_face_spots)
+            # cv2.imshow("normalized", norm_face_spots)
 
             # Add the coordinates of all the wanted landmarks to a list
             faces_landmarks_collector.append(shape[part_list])
-            # cv2.waitKey(0)
 
     return faces_landmarks_collector
 

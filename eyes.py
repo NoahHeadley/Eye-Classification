@@ -10,12 +10,6 @@ directory = os.fsencode("crops")
 directory2 = os.fsencode("faces")
 
 
-def build_arg_parser():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-i", "--image", required=True)
-    return vars(ap.parse_args())
-
-
 def locate_iris(image):
 
     img = cv2.imread(image)
@@ -24,7 +18,7 @@ def locate_iris(image):
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray_img = cv2.GaussianBlur(gray_img, (7, 7), 0)
 
-    _, threshold = cv2.threshold(gray_img, 65, 255, cv2.THRESH_BINARY_INV)
+    _, threshold = cv2.threshold(gray_img, 50, 255, cv2.THRESH_BINARY_INV)
 
     contours, _ = cv2.findContours(
         threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -49,12 +43,9 @@ def hough_locate_iris(image):
     # Blur image to reduce noise
     img_blur = cv2.GaussianBlur(gray, (7, 7), 0)
 
-    # _, threshold = cv2.threshold(img_blur, 100, 255, cv2.THRESH_BINARY_INV)
-    # contours, _ = cv2.findContours(
-    #     threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # Apply Hough Transform on the image
     circles = cv2.HoughCircles(img_blur, cv2.HOUGH_GRADIENT, 1,
-                               img.shape[0]/64, param1=50, param2=10, minRadius=15, maxRadius=23)
+                               10, param1=30, param2=10, minRadius=15, maxRadius=25)
 
     radius = None
     center = None
@@ -72,20 +63,18 @@ def hough_locate_iris(image):
             # Draw outer circle
             cv2.circle(img, center, radius, (0, 255, 0), 1)
             # Draw inner circle
-            # cv2.circle(img, center, 1, (0, 0, 255), 1)
+            cv2.circle(img, center, 1, (0, 0, 255), 1)
         cv2.imshow("iris", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
         center, radius, offset = normalize_circle(
-            img, center, radius, maxRadius=23, minRadius=15)
+            img, center, radius, maxRadius=25, minRadius=17)
     if center is not None:
         return center, radius, offset
 
 
 if __name__ == '__main__':
-    # args = build_arg_parser()
-    # image = args["image"]
     iris = []
     num_counted = 0
     rejects = 0
@@ -105,8 +94,3 @@ if __name__ == '__main__':
     print(iris)
     if(rejects is not 0):
         print(f"The number of rejects is {rejects} :(")
-    # for file in os.listdir(directory2):
-    #     filename = os.fsdecode(file)
-    #     hough_locate_iris("faces/" + filename)
-    #     if keyboard.is_pressed('x'):
-    #         break
