@@ -1,21 +1,7 @@
-######## Image Object Detection Using Tensorflow-trained Classifier #########
-#
-# Author: Evan Juras
-# Date: 1/15/18
-# Description:
-# This program uses a TensorFlow-trained neural network to perform object detection.
-# It loads the classifier and uses it to perform object detection on an image.
-# It draws boxes, scores, and labels around the objects of interest in the image.
+# Some of this is copied from EdjeElectronic's Tensorflow guide (https://github.com/EdjeElectronics/TensorFlow-Object-Detection-API-Tutorial-Train-Multiple-Objects-Windows-10)
 
-# Some of the code is copied from Google's example at
-# https://github.com/tensorflow/models/blob/master/research/object_detection/object_detection_tutorial.ipynb
+# I have modified this to work with my system and return data
 
-# and some is copied from Dat Tran's example at
-# https://github.com/datitran/object_detector_app/blob/master/object_detection_app.py
-
-# but I changed it to make it more understandable to me.
-
-# Import packages
 from utils import visualization_utils as vis_util
 from utils import label_map_util
 import os
@@ -25,8 +11,9 @@ import tensorflow as tf
 import sys
 import math
 
-# This is needed since the notebook is stored in the object_detection folder.
 sys.path.append("..")
+
+# This is the directory containing the eyes used for testing
 directory = os.fsencode("demo")
 # Import utilites
 
@@ -53,10 +40,6 @@ for file in os.listdir(directory):
     NUM_CLASSES = 1
 
     # Load the label map.
-    # Label maps map indices to category names, so that when our convolution
-    # network predicts `5`, we know that this corresponds to `king`.
-    # Here we use internal utility functions, but anything that returns a
-    # dictionary mapping integers to appropriate string labels would be fine
     label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
     categories = label_map_util.convert_label_map_to_categories(
         label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
@@ -103,20 +86,21 @@ for file in os.listdir(directory):
         feed_dict={image_tensor: image_expanded})
 
     # Draw the results of the detection (aka 'visulaize the results')
-    vis_util.visualize_boxes_and_labels_on_image_array(
-        image,
-        np.squeeze(boxes),
-        np.squeeze(classes).astype(np.int32),
-        np.squeeze(scores),
-        category_index,
-        use_normalized_coordinates=True,
-        line_thickness=1,
-        min_score_thresh=0.80)
+#     vis_util.visualize_boxes_and_labels_on_image_array(
+#         image,
+#         np.squeeze(boxes),
+#         np.squeeze(classes).astype(np.int32),
+#         np.squeeze(scores),
+#         category_index,
+#         use_normalized_coordinates=True,
+#         line_thickness=1,
+#         min_score_thresh=0.80)
 
     max_boxes_to_draw = boxes.shape[0]
 
     min_score_thresh = 0.80
 
+    # This goes through each of the detected boxes and their associated scores and calculates relevent data for the project
     for box, score in zip(boxes, scores):
         for i in range(min(max_boxes_to_draw, boxes.shape[0])):
             if score[i] > min_score_thresh:
