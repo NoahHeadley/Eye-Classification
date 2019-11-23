@@ -1,4 +1,6 @@
 from imutils import face_utils
+from scipy.interpolate import lagrange
+import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import sys
@@ -18,6 +20,20 @@ def build_arg_parser():
     ap.add_argument("-f", "--feature", required=True,
                     help="wanted face feature")
     return vars(ap.parse_args())
+
+
+def fit_curve(lists):
+    for points in lists:
+        try:
+            x = points[:, 0]
+            y = points[:, 1]
+            x = np.append(x, points[0, 0])
+            y = np.append(y, points[0, 1])
+            shape = plt.plot(x, y, '-')
+            plt.show()
+        except Exception as e:
+            print(e)
+            next
 
 
 def get_face_features(predictor, image, wanted_part):
@@ -71,7 +87,11 @@ def get_face_features(predictor, image, wanted_part):
     head_list = [x for x in range(11)] + \
         annoying_points + [x for x in range(114, 135)]
     lip_list = [x for x in range(
-        11, 25) if x not in annoying_points] + [x for x in range(152, 194)]
+        11, 26) if x not in annoying_points] + [x for x in range(152, 194)]
+    top_lip_list = [x for x in range(
+        180, 194)] + [x for x in reversed(range(152, 166))]
+    bottom_lip_list = [x for x in range(
+        11, 26) if x not in annoying_points] + [x for x in reversed(range(166, 180))]
     r_eye_list = [x for x in range(26, 48) if x not in annoying_points]
     l_eye_list = [x for x in range(48, 70) if x not in annoying_points]
     r_eyebrow_list = [x for x in range(70, 92) if x not in annoying_points]
@@ -81,7 +101,8 @@ def get_face_features(predictor, image, wanted_part):
     if(wanted_part == "head"):
         wanted_list.append(head_list)
     elif(wanted_part == "lips"):
-        wanted_list.append(lip_list)
+        wanted_list.append(top_lip_list)
+        wanted_list.append(bottom_lip_list)
     elif(wanted_part == "right eye"):
         wanted_list.append(r_eye_list)
     elif(wanted_part == "left eye"):
@@ -93,9 +114,9 @@ def get_face_features(predictor, image, wanted_part):
     elif(wanted_part == "nose"):
         wanted_list.append(nose_list)
     elif(wanted_part == "all"):
-        wanted_list = [head_list, lip_list, r_eye_list,
+        wanted_list = [head_list, lip_list, top_lip_list, bottom_lip_list, r_eye_list,
                        l_eye_list, r_eyebrow_list, l_eyebrow_list, nose_list]
-        partnames_list = ["head", "lips", "right eye",
+        partnames_list = ["head", "lips", "top lip", "bottom lip", "right eye",
                           "left eye", "right eye brow", "left eye brow", "nose"]
     else:
         print("""Input string must be one of the following
@@ -144,7 +165,6 @@ def get_face_features(predictor, image, wanted_part):
             # loop over the (x,y)-coordinates for the facial landmarks
             # and draw them on the image
             for(x, y) in shape[part_list]:
-                # cv2.circle(image_rotate, (x, y), 1, (0, 0, 255), -1)
                 if(x < face_x):
                     face_x = x
                 if(y < face_y):
@@ -157,7 +177,6 @@ def get_face_features(predictor, image, wanted_part):
             # crop out faces
             cropped_face = image_rotate[face_y-10: face_y +
                                         face_h+10, face_x-10:face_x + face_w+10]
-            # cv2.imshow("cropped {}".format(wanted_part), cropped_face)
             # cv2.waitKey(0)
             if(partnames_list is not None):
                 wanted_part = partnames_list.pop(0)
@@ -176,7 +195,6 @@ def get_face_features(predictor, image, wanted_part):
 
             # display an image of the wanted normalized values
 
-            # norm_face_spots = cv2.imread("black.png")
             for j in part_list:
                 (x, y) = shape[j]
                 # cv2.circle(norm_face_spots, (x, y), 1, (255, 255, 255), -1)
@@ -184,7 +202,6 @@ def get_face_features(predictor, image, wanted_part):
 
             # Add the coordinates of all the wanted landmarks to a list
             faces_landmarks_collector.append(shape[part_list])
-
     return faces_landmarks_collector
 
 
@@ -193,4 +210,4 @@ if __name__ == '__main__':
     shape_predictor = args["shape_predictor"]
     image = args["image"]
     feature = args["feature"]
-    print(get_face_features(shape_predictor, image, feature))
+    fit_curve(get_face_features(shape_predictor, image, feature))

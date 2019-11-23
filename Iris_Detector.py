@@ -86,15 +86,15 @@ for file in os.listdir(directory):
         feed_dict={image_tensor: image_expanded})
 
     # Draw the results of the detection (aka 'visulaize the results')
-#     vis_util.visualize_boxes_and_labels_on_image_array(
-#         image,
-#         np.squeeze(boxes),
-#         np.squeeze(classes).astype(np.int32),
-#         np.squeeze(scores),
-#         category_index,
-#         use_normalized_coordinates=True,
-#         line_thickness=1,
-#         min_score_thresh=0.80)
+    vis_util.visualize_boxes_and_labels_on_image_array(
+        image,
+        np.squeeze(boxes),
+        np.squeeze(classes).astype(np.int32),
+        np.squeeze(scores),
+        category_index,
+        use_normalized_coordinates=True,
+        line_thickness=1,
+        min_score_thresh=0.80)
 
     max_boxes_to_draw = boxes.shape[0]
 
@@ -113,10 +113,9 @@ for file in os.listdir(directory):
                 covered_length = 2*radius - (ymax-ymin)
                 print(
                     f"width = {width}\nheight={height}\narea={area}\ncovered={covered_length}\n")
-    # cv2.imshow('Object detector', image)
+    cv2.imshow('Object detector', image)
 
     # Press any key to close the image
-    # cv2.waitKey(0)
+    cv2.waitKey(0)
 
-    # Clean up
-    # cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
