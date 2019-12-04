@@ -22,7 +22,7 @@ def build_arg_parser():
     return vars(ap.parse_args())
 
 
-def fit_curve(lists):
+def find_area(lists):
     for points in lists:
         try:
             # This will only work in a list of coordinates
@@ -119,6 +119,8 @@ def get_face_features(predictor, image, wanted_part):
     l_eyebrow_list = [x for x in range(92, 114) if x not in annoying_points]
     nose_list = range(135, 152)
     partnames_list = None
+    all_mode = True
+    all_list = range(194)
     if(wanted_part == "head"):
         wanted_list.append(head_list)
     elif(wanted_part == "lips"):
@@ -176,6 +178,27 @@ def get_face_features(predictor, image, wanted_part):
         gray_rotate = cv2.cvtColor(image_rotate, cv2.COLOR_BGR2GRAY)
         rects_rotate = detector(gray_rotate)
         # adjust shape values to the rotated image
+        if(all_mode):
+            shape = predictor(gray_rotate, rects_rotate[i])
+            shape = face_utils.shape_to_np(shape)
+            face_x, face_y = sys.maxsize, sys.maxsize
+            face_w, face_h = 0, 0
+            for(x, y) in shape[all_list]:
+                if(x < face_x):
+                    face_x = x
+                if(y < face_y):
+                    face_y = y
+            for(x, y) in shape[all_list]:
+                if(face_w < x - face_x):
+                    face_w = x - face_x
+                if(face_h < y - face_y):
+                    face_h = y - face_y
+            for j in range(0, int((shape.size)/2)):
+                (x, y) = shape[j]
+                x_norm = (x - face_x)/(face_w) * 1000
+                y_norm = (y - face_y)/(face_h) * 1000
+                shape[j] = (x_norm, y_norm)
+
         while(wanted_list.__len__() > 0):
             part_list = wanted_list.pop(0)
             shape = predictor(gray_rotate, rects_rotate[i])
@@ -183,18 +206,18 @@ def get_face_features(predictor, image, wanted_part):
             # values that will be used to find the perfect values for cropping face
             face_x, face_y = sys.maxsize, sys.maxsize
             face_w, face_h = 0, 0
-            # loop over the (x,y)-coordinates for the facial landmarks
-            # and draw them on the image
-            for(x, y) in shape[part_list]:
-                if(x < face_x):
-                    face_x = x
-                if(y < face_y):
-                    face_y = y
-            for(x, y) in shape[part_list]:
-                if(face_w < x - face_x):
-                    face_w = x - face_x
-                if(face_h < y - face_y):
-                    face_h = y - face_y
+            # loop over the (x,y)-coordinates for the facial landmarks and get the coordinates containing the points
+            if(not all_mode):
+                for(x, y) in shape[part_list]:
+                    if(x < face_x):
+                        face_x = x
+                    if(y < face_y):
+                        face_y = y
+                for(x, y) in shape[part_list]:
+                    if(face_w < x - face_x):
+                        face_w = x - face_x
+                    if(face_h < y - face_y):
+                        face_h = y - face_y
             # crop out faces
             cropped_face = image_rotate[face_y-10: face_y +
                                         face_h+10, face_x-10: face_x + face_w+10]
@@ -207,12 +230,13 @@ def get_face_features(predictor, image, wanted_part):
             filename = out_directory + f"/{image_name[6:]}"
             cv2.imwrite(filename, cropped_face)
 
-            # normalize images to be values from 0 to 1000
-            for j in range(0, int((shape.size)/2)):
-                (x, y) = shape[j]
-                x_norm = (x - face_x)/(face_w) * 1000
-                y_norm = (y - face_y)/(face_h) * 1000
-                shape[j] = (x_norm, y_norm)
+            if(not all_mode):
+                # normalize images to be values from 0 to 1000
+                for j in range(0, int((shape.size)/2)):
+                    (x, y) = shape[j]
+                    x_norm = (x - face_x)/(face_w) * 1000
+                    y_norm = (y - face_y)/(face_h) * 1000
+                    shape[j] = (x_norm, y_norm)
 
             # display an image of the wanted normalized values
 
@@ -231,4 +255,4 @@ if __name__ == '__main__':
     shape_predictor = args["shape_predictor"]
     image = args["image"]
     feature = args["feature"]
-    fit_curve(get_face_features(shape_predictor, image, feature))
+    find_area(get_face_features(shape_predictor, image, feature))
