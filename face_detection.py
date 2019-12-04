@@ -25,12 +25,33 @@ def build_arg_parser():
 def fit_curve(lists):
     for points in lists:
         try:
+            # This will only work in a list of coordinates
+            # get all the x and y coordinates
             x = points[:, 0]
             y = points[:, 1]
-            x = np.append(x, points[0, 0])
-            y = np.append(y, points[0, 1])
-            shape = plt.plot(x, y, '-')
-            plt.show()
+            x_super = np.array([])
+            y_super = np.array([])
+            for i in range(y.size):
+                x1 = np.linspace(x[i], x[(i+1) % x.size],
+                                 num=100)
+                y1 = np.linspace(y[i], y[(i+1) % y.size],
+                                 num=100)
+                x_super = np.append(x_super, x1)
+                y_super = np.append(y_super, y1)
+                # print(x1)
+                # print(y1)
+
+            #     plt.plot(x1, y1, '-o')
+            # plt.show()
+            x_super.flatten()
+            y_super.flatten()
+            size = np.size(x_super)
+            area = 0
+            for i in range(int(size/2)):
+                height = np.abs(y_super[i] - y_super[size - i - 1])
+                # width = np.abs((x_super[i] - x_super[size - i - 1]))
+                area += height
+            print(area)
         except Exception as e:
             print(e)
             next
@@ -139,7 +160,7 @@ def get_face_features(predictor, image, wanted_part):
         shape = face_utils.shape_to_np(shape)
 
         # get center of face so that we can rotate
-        (img_w, img_h) = image.shape[:2]
+        (img_w, img_h) = image.shape[: 2]
         center = (img_w/2, img_h/2)
 
         # Shape 0 and 134 values are the sides of the head right under forehead
@@ -176,7 +197,7 @@ def get_face_features(predictor, image, wanted_part):
                     face_h = y - face_y
             # crop out faces
             cropped_face = image_rotate[face_y-10: face_y +
-                                        face_h+10, face_x-10:face_x + face_w+10]
+                                        face_h+10, face_x-10: face_x + face_w+10]
             # cv2.waitKey(0)
             if(partnames_list is not None):
                 wanted_part = partnames_list.pop(0)
