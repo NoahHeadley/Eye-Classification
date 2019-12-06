@@ -22,39 +22,38 @@ def build_arg_parser():
     return vars(ap.parse_args())
 
 
-def find_area(lists):
-    for points in lists:
-        try:
-            # This will only work in a list of coordinates
-            # get all the x and y coordinates
-            x = points[:, 0]
-            y = points[:, 1]
-            x_super = np.array([])
-            y_super = np.array([])
-            for i in range(y.size):
-                x1 = np.linspace(x[i], x[(i+1) % x.size],
-                                 num=100)
-                y1 = np.linspace(y[i], y[(i+1) % y.size],
-                                 num=100)
-                x_super = np.append(x_super, x1)
-                y_super = np.append(y_super, y1)
-                # print(x1)
-                # print(y1)
+def find_area(points):
 
-            #     plt.plot(x1, y1, '-o')
+    try:
+        # This will only work in a list of coordinates
+        # get all the x and y coordinates
+        x = points[:, 0]
+        y = points[:, 1]
+        x_super = np.array([])
+        y_super = np.array([])
+        for i in range(y.size):
+            x1 = np.linspace(x[i], x[(i+1) % x.size],
+                             num=100)
+            y1 = np.linspace(y[i], y[(i+1) % y.size],
+                             num=100)
+            x_super = np.append(x_super, x1)
+            y_super = np.append(y_super, y1)
+            # print(x1)
+            # print(y1)
+
+            #plt.plot(x1, y1, '-o')
             # plt.show()
-            x_super.flatten()
-            y_super.flatten()
-            size = np.size(x_super)
-            area = 0
-            for i in range(int(size/2)):
-                height = np.abs(y_super[i] - y_super[size - i - 1])
-                # width = np.abs((x_super[i] - x_super[size - i - 1]))
-                area += height
-            print(area)
-        except Exception as e:
-            print(e)
-            next
+        x_super.flatten()
+        y_super.flatten()
+        size = np.size(x_super)
+        area = 0
+        for i in range(int(size/2)):
+            height = np.abs(y_super[i] - y_super[size - i - 1])
+            # width = np.abs((x_super[i] - x_super[size - i - 1]))
+            area += height
+        return area
+    except Exception as e:
+        print(e)
 
 
 def get_face_features(predictor, image, wanted_part):
@@ -86,7 +85,7 @@ def get_face_features(predictor, image, wanted_part):
     for(i, rect) in enumerate(rects):
         faces += 1
     # list of wanted face values
-    faces_landmarks_collector = list(np.array(np.array((int, int))))
+    faces_landmarks_collector = list()
 
     # range for face features are as follows
     #  0 - 10: Left Cheek
@@ -139,8 +138,8 @@ def get_face_features(predictor, image, wanted_part):
     elif(wanted_part == "all"):
         wanted_list = [head_list, lip_list, top_lip_list, bottom_lip_list, r_eye_list,
                        l_eye_list, r_eyebrow_list, l_eyebrow_list, nose_list]
-        partnames_list = ["head", "lips", "top lip", "bottom lip", "right eye",
-                          "left eye", "right eye brow", "left eye brow", "nose"]
+        partnames_list = ["head", "lips", "top_lip", "bottom_lip", "right_eye",
+                          "left_eye", "right_eye_brow", "left_eye_brow", "nose"]
     else:
         print("""Input string must be one of the following
         "head": Shape of head from left temple to right temple
@@ -201,23 +200,22 @@ def get_face_features(predictor, image, wanted_part):
 
         while(wanted_list.__len__() > 0):
             part_list = wanted_list.pop(0)
-            shape = predictor(gray_rotate, rects_rotate[i])
-            shape = face_utils.shape_to_np(shape)
+            new_shape = predictor(gray_rotate, rects_rotate[i])
+            new_shape = face_utils.shape_to_np(new_shape)
             # values that will be used to find the perfect values for cropping face
             face_x, face_y = sys.maxsize, sys.maxsize
             face_w, face_h = 0, 0
             # loop over the (x,y)-coordinates for the facial landmarks and get the coordinates containing the points
-            if(not all_mode):
-                for(x, y) in shape[part_list]:
-                    if(x < face_x):
-                        face_x = x
-                    if(y < face_y):
-                        face_y = y
-                for(x, y) in shape[part_list]:
-                    if(face_w < x - face_x):
-                        face_w = x - face_x
-                    if(face_h < y - face_y):
-                        face_h = y - face_y
+            for(x, y) in new_shape[part_list]:
+                if(x < face_x):
+                    face_x = x
+                if(y < face_y):
+                    face_y = y
+            for(x, y) in new_shape[part_list]:
+                if(face_w < x - face_x):
+                    face_w = x - face_x
+                if(face_h < y - face_y):
+                    face_h = y - face_y
             # crop out faces
             cropped_face = image_rotate[face_y-10: face_y +
                                         face_h+10, face_x-10: face_x + face_w+10]
@@ -229,14 +227,6 @@ def get_face_features(predictor, image, wanted_part):
                 os.makedirs(out_directory)
             filename = out_directory + f"/{image_name[6:]}"
             cv2.imwrite(filename, cropped_face)
-
-            if(not all_mode):
-                # normalize images to be values from 0 to 1000
-                for j in range(0, int((shape.size)/2)):
-                    (x, y) = shape[j]
-                    x_norm = (x - face_x)/(face_w) * 1000
-                    y_norm = (y - face_y)/(face_h) * 1000
-                    shape[j] = (x_norm, y_norm)
 
             # display an image of the wanted normalized values
 
@@ -255,4 +245,4 @@ if __name__ == '__main__':
     shape_predictor = args["shape_predictor"]
     image = args["image"]
     feature = args["feature"]
-    find_area(get_face_features(shape_predictor, image, feature))
+    get_face_features(shape_predictor, image, feature)

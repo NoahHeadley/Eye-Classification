@@ -2,14 +2,14 @@
 
 # I have modified this to work with my system and return data
 
+import math
+import sys
+import tensorflow as tf
+import numpy as np
+import cv2
 from utils import visualization_utils as vis_util
 from utils import label_map_util
 import os
-import cv2
-import numpy as np
-import tensorflow as tf
-import sys
-import math
 
 sys.path.append("..")
 
@@ -19,8 +19,13 @@ directory = os.fsencode("demo")
 
 # Name of the directory containing the object detection module we're using
 MODEL_NAME = 'inference_graph'
-for file in os.listdir(directory):
-    IMAGE_NAME = "demo/" + os.fsdecode(file)
+
+
+def get_iris(image_file):
+
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+    IMAGE_NAME = image_file
 
     # Grab path to current working directory
     CWD_PATH = os.getcwd()
@@ -111,11 +116,11 @@ for file in os.listdir(directory):
                 height = ymax - ymin
                 # This is the length of the iris that is obscured by the eyelids without regard to which end it is obscured
                 covered_length = 2*radius - (ymax-ymin)
-                print(
-                    f"width = {width}\nheight={height}\narea={area}\ncovered={covered_length}\n")
-    cv2.imshow('Object detector', image)
+                return width, height, area, covered_length
 
-    # Press any key to close the image
-    cv2.waitKey(0)
+    # cv2.imshow('Object detector', image)
 
-    cv2.destroyAllWindows()
+    # # Press any key to close the image
+    # cv2.waitKey(0)
+
+    # cv2.destroyAllWindows()
