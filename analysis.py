@@ -40,5 +40,3 @@ if __name__ == '__main__':
 
     for val in cluster_mega:
         x, y = val
-        if(y == 2):
-            print(x)

@@ -10,6 +10,7 @@ import cv2
 from utils import visualization_utils as vis_util
 from utils import label_map_util
 import os
+import argparse
 
 sys.path.append("..")
 
@@ -19,6 +20,13 @@ directory = os.fsencode("demo")
 
 # Name of the directory containing the object detection module we're using
 MODEL_NAME = 'inference_graph'
+
+
+def build_arg_parser():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-i", "--image", required=False,
+                    help="image of an eye", default="me.jpg")
+    return vars(ap.parse_args())
 
 
 def get_iris(image_file):
@@ -105,6 +113,12 @@ def get_iris(image_file):
 
     min_score_thresh = 0.80
 
+    cv2.imshow('Object detector', image)
+
+    # # Press any key to close the image
+    cv2.waitKey(0)
+
+    cv2.destroyAllWindows()
     # This goes through each of the detected boxes and their associated scores and calculates relevent data for the project
     for box, score in zip(boxes, scores):
         for i in range(min(max_boxes_to_draw, boxes.shape[0])):
@@ -118,9 +132,7 @@ def get_iris(image_file):
                 covered_length = 2*radius - (ymax-ymin)
                 return width, height, area, covered_length
 
-    # cv2.imshow('Object detector', image)
 
-    # # Press any key to close the image
-    # cv2.waitKey(0)
-
-    # cv2.destroyAllWindows()
+if __name__ == '__main__':
+    args = build_arg_parser()
+    get_iris(args['image'])
