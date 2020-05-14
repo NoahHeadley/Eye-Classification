@@ -23,6 +23,12 @@ def build_arg_parser():
 
 
 def find_area(points):
+    """
+    Calculates the area of the shape formed by connecting all the points
+
+    Parameter:
+    points (List(Int,Int)): A set of x,y coordinates for every landmark 
+    """
 
     try:
         # This will only work in a list of coordinates
@@ -56,12 +62,16 @@ def find_area(points):
         print(e)
 
 
+def find_angle(points):
+    return None
+
+
 def get_face_features(predictor, image, wanted_part):
     '''
     Given input image and a pre-trained shape-detector,
     returns coordinates of facial landmarks of each detected face as coordinates with
     values from 0 to 1000
-    predictor: a trained face detector (recommended to use dlibs 68 landmark detector)
+    predictor: a trained face detector (recommended to use dlibs 194 landmark detector)
     image: input image
     wanted_part: a string dictating which facial feature that is wanted
     '''
@@ -114,6 +124,7 @@ def get_face_features(predictor, image, wanted_part):
         11, 26) if x not in annoying_points] + [x for x in reversed(range(166, 180))]
     r_eye_list = [x for x in range(26, 48) if x not in annoying_points]
     l_eye_list = [x for x in range(48, 70) if x not in annoying_points]
+    eyes_list = [x for x in range(26, 70) if x not in annoying_points]
     r_eyebrow_list = [x for x in range(70, 92) if x not in annoying_points]
     l_eyebrow_list = [x for x in range(92, 114) if x not in annoying_points]
     nose_list = range(135, 152)
@@ -140,6 +151,8 @@ def get_face_features(predictor, image, wanted_part):
                        l_eye_list, r_eyebrow_list, l_eyebrow_list, nose_list]
         partnames_list = ["head", "lips", "top_lip", "bottom_lip", "right_eye",
                           "left_eye", "right_eye_brow", "left_eye_brow", "nose"]
+    elif(wanted_part == "eyes"):
+        wanted_list.append(eyes_list)
     else:
         print("""Input string must be one of the following
         "head": Shape of head from left temple to right temple
@@ -182,6 +195,7 @@ def get_face_features(predictor, image, wanted_part):
             shape = face_utils.shape_to_np(shape)
             face_x, face_y = sys.maxsize, sys.maxsize
             face_w, face_h = 0, 0
+
             for(x, y) in shape[all_list]:
                 if(x < face_x):
                     face_x = x
@@ -192,6 +206,7 @@ def get_face_features(predictor, image, wanted_part):
                     face_w = x - face_x
                 if(face_h < y - face_y):
                     face_h = y - face_y
+
             for j in range(0, int((shape.size)/2)):
                 (x, y) = shape[j]
                 x_norm = (x - face_x)/(face_w) * 1000
@@ -217,8 +232,8 @@ def get_face_features(predictor, image, wanted_part):
                 if(face_h < y - face_y):
                     face_h = y - face_y
             # crop out faces
-            cropped_face = image_rotate[face_y-10: face_y +
-                                        face_h+10, face_x-10: face_x + face_w+10]
+            cropped_face = image_rotate[face_y-30: face_y +
+                                        face_h+30, face_x-30: face_x + face_w+30]
             # cv2.waitKey(0)
             if(partnames_list is not None):
                 wanted_part = partnames_list.pop(0)
@@ -230,12 +245,14 @@ def get_face_features(predictor, image, wanted_part):
 
             # display an image of the wanted normalized values
 
-            for j in part_list:
-                (x, y) = shape[j]
-                # cv2.circle(norm_face_spots, (x, y), 1, (255, 255, 255), -1)
-            # cv2.imshow("normalized", norm_face_spots)
+            # for j in part_list:
+            #     (x, y) = shape[j]
+            #     cv2.circle(image_rotate, (x, y), 1, (255, 255, 255), -1)
+            # cv2.imshow("normalized", image)
+            # cv2.waitKey(0)
 
             # Add the coordinates of all the wanted landmarks to a list
+            shape[part_list].sort()
             faces_landmarks_collector.append(shape[part_list])
     return faces_landmarks_collector
 
@@ -245,4 +262,6 @@ if __name__ == '__main__':
     shape_predictor = args["shape_predictor"]
     image = args["image"]
     feature = args["feature"]
-    get_face_features(shape_predictor, image, feature)
+    output = list(get_face_features(shape_predictor, image, feature))
+    for i in output[0]:
+        print(i)

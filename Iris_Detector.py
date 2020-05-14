@@ -75,7 +75,7 @@ def get_iris(image_file):
     image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
 
     # Output tensors are the detection boxes, scores, and classes
-    # Each box represents a part of the image where a particular object was detected
+    # Each box represents a part of the image where the iris was detected
     detection_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
 
     # Each score represents level of confidence for each of the objects.
@@ -115,7 +115,7 @@ def get_iris(image_file):
 
     cv2.imshow('Object detector', image)
 
-    # # Press any key to close the image
+    # # # Press any key to close the image
     cv2.waitKey(0)
 
     cv2.destroyAllWindows()
