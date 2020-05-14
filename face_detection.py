@@ -1,3 +1,8 @@
+"""
+face_detection will scan the image looking for a face. It estimates the location of a certain amount of landmarks of the face.
+It uses these landmarks to crop out face features and normalizes their location from 0 to 1000. It then returns a list containing
+the normalized coordinates of facial landmarks surrounding a wanted features.
+"""
 from imutils import face_utils
 from scipy.interpolate import lagrange
 import matplotlib.pyplot as plt
@@ -234,7 +239,6 @@ def get_face_features(predictor, image, wanted_part):
             # crop out faces
             cropped_face = image_rotate[face_y-30: face_y +
                                         face_h+30, face_x-30: face_x + face_w+30]
-            # cv2.waitKey(0)
             if(partnames_list is not None):
                 wanted_part = partnames_list.pop(0)
             out_directory = f"crops/{wanted_part}"
