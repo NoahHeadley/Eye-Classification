@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     path = 'faces/'
     directory = os.fsencode("faces")
-    out_file = open('eyes.txt', 'x')
+    out_file = open('eyes.txt', 'w')
     num_variables = 11
     num_clusters = math.ceil(math.sqrt(len(directory)))
     out_file.write(
@@ -56,8 +56,8 @@ if __name__ == '__main__':
     for file in os.listdir(directory):
         image = os.fsdecode(file)
         face = fd.get_face_features(shape_predictor, path + image, 'eyes')
-        right_eye = face[4]
-        left_eye = face[5]
+        right_eye = face[0]
+        left_eye = face[1]
         area_1, area_2, width_1, width_2, height_1, height_2, iris_area_1, iris_area_2, covered_1, covered_2 = get_eye_info(
             right_eye, left_eye, image)
         dist = get_dist(right_eye[0, 0], right_eye[0, 1],

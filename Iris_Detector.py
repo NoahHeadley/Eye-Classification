@@ -113,10 +113,10 @@ def get_iris(image_file):
 
     min_score_thresh = 0.80
 
-    cv2.imshow('Object detector', image)
+    # cv2.imshow('Object detector', image)
 
-    # # # Press any key to close the image
-    cv2.waitKey(0)
+    # # # # Press any key to close the image
+    # cv2.waitKey(0)
 
     cv2.destroyAllWindows()
     # This goes through each of the detected boxes and their associated scores and calculates relevent data for the project

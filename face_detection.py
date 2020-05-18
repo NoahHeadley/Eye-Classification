@@ -1,8 +1,3 @@
-"""
-face_detection will scan the image looking for a face. It estimates the location of a certain amount of landmarks of the face.
-It uses these landmarks to crop out face features and normalizes their location from 0 to 1000. It then returns a list containing
-the normalized coordinates of facial landmarks surrounding a wanted features.
-"""
 from imutils import face_utils
 from scipy.interpolate import lagrange
 import matplotlib.pyplot as plt
@@ -129,7 +124,6 @@ def get_face_features(predictor, image, wanted_part):
         11, 26) if x not in annoying_points] + [x for x in reversed(range(166, 180))]
     r_eye_list = [x for x in range(26, 48) if x not in annoying_points]
     l_eye_list = [x for x in range(48, 70) if x not in annoying_points]
-    eyes_list = [x for x in range(26, 70) if x not in annoying_points]
     r_eyebrow_list = [x for x in range(70, 92) if x not in annoying_points]
     l_eyebrow_list = [x for x in range(92, 114) if x not in annoying_points]
     nose_list = range(135, 152)
@@ -157,7 +151,9 @@ def get_face_features(predictor, image, wanted_part):
         partnames_list = ["head", "lips", "top_lip", "bottom_lip", "right_eye",
                           "left_eye", "right_eye_brow", "left_eye_brow", "nose"]
     elif(wanted_part == "eyes"):
-        wanted_list.append(eyes_list)
+        wanted_list.append(r_eye_list)
+        wanted_list.append(l_eye_list)
+        partnames_list = ["right_eye", "left_eye"]
     else:
         print("""Input string must be one of the following
         "head": Shape of head from left temple to right temple
@@ -239,6 +235,7 @@ def get_face_features(predictor, image, wanted_part):
             # crop out faces
             cropped_face = image_rotate[face_y-30: face_y +
                                         face_h+30, face_x-30: face_x + face_w+30]
+            # cv2.waitKey(0)
             if(partnames_list is not None):
                 wanted_part = partnames_list.pop(0)
             out_directory = f"crops/{wanted_part}"
