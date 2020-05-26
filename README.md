@@ -9,6 +9,8 @@ run the following commands
 
 > conda install -n eyes python=3.7.6 scipy tensorflow=1.14.0
 
+> conda install -c conda-forge tf_object_detection
+
 > conda activate eyes
 
 > pip install opencv-python cmake dlib imutils matplotlib cython pillow

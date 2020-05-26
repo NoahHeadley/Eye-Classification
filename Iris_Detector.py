@@ -118,7 +118,7 @@ def get_iris(image_file):
     # # # # Press any key to close the image
     # cv2.waitKey(0)
 
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
     # This goes through each of the detected boxes and their associated scores and calculates relevent data for the project
     for box, score in zip(boxes, scores):
         for i in range(min(max_boxes_to_draw, boxes.shape[0])):
