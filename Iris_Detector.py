@@ -110,6 +110,8 @@ def get_iris(right_eye, left_eye):
 
     # if the confidence score is under 80% then the iris dimensions aren't trustworthy
     min_score_thresh = 0.8
+    width, height, area, covered_length = None
+    width2, height2, area2, covered_length2 = None
 
     # This goes through each of the detected boxes and their associated scores and calculates relevent data for the project
     for box, score in zip(boxes, scores):
