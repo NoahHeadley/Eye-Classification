@@ -29,7 +29,7 @@ With the shape predictor and the faces folder, you can now run
 
 > python clusterize.py
 
-and it will process each of the faces and create a folder containing the crops of the eyes and a file called eyes.txt that contains variables for each pair of eyes in the faces folder. This will take a long time to run as it uses tensorflow for each individual eye.
+and it will process each of the faces and create a folder containing the crops of the eyes and a file called eyes.txt that contains variables for each pair of eyes in the faces folder. This may take a long time depending on your system.
 
 After clusterize finishes, you then will run
 
