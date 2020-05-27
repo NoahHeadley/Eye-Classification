@@ -11,6 +11,8 @@ from utils import visualization_utils as vis_util
 from utils import label_map_util
 import os
 import argparse
+import warnings
+
 
 sys.path.append("..")
 
@@ -29,11 +31,13 @@ def build_arg_parser():
     return vars(ap.parse_args())
 
 
-def get_iris(image_file):
+def get_iris(right_eye, left_eye):
+    warnings.simplefilter(action='ignore', category=FutureWarning)
 
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-    IMAGE_NAME = image_file
+    IMAGE_NAME = right_eye
+    IMAGE_NAME2 = left_eye
 
     # Grab path to current working directory
     CWD_PATH = os.getcwd()
@@ -48,6 +52,7 @@ def get_iris(image_file):
 
     # Path to image
     PATH_TO_IMAGE = os.path.join(CWD_PATH, IMAGE_NAME)
+    PATH_TO_IMAGE2 = os.path.join(CWD_PATH, IMAGE_NAME2)
 
     # Number of classes the object detector can identify
     NUM_CLASSES = 1
@@ -93,32 +98,19 @@ def get_iris(image_file):
     image = cv2.imread(PATH_TO_IMAGE)
     image_expanded = np.expand_dims(image, axis=0)
 
+    image2 = cv2.imread(PATH_TO_IMAGE2)
+    image2_expanded = np.expand_dims(image2, axis=0)
+
     # Perform the actual detection by running the model with the image as input
     (boxes, scores, classes, num) = sess.run(
         [detection_boxes, detection_scores, detection_classes, num_detections],
         feed_dict={image_tensor: image_expanded})
 
-    # Draw the results of the detection (aka 'visulaize the results')
-    vis_util.visualize_boxes_and_labels_on_image_array(
-        image,
-        np.squeeze(boxes),
-        np.squeeze(classes).astype(np.int32),
-        np.squeeze(scores),
-        category_index,
-        use_normalized_coordinates=True,
-        line_thickness=1,
-        min_score_thresh=0.80)
-
     max_boxes_to_draw = boxes.shape[0]
 
-    min_score_thresh = 0.80
+    # if the confidence score is under 80% then the iris dimensions aren't trustworthy
+    min_score_thresh = 0.8
 
-    # cv2.imshow('Object detector', image)
-
-    # # # # Press any key to close the image
-    # cv2.waitKey(0)
-
-    # cv2.destroyAllWindows()
     # This goes through each of the detected boxes and their associated scores and calculates relevent data for the project
     for box, score in zip(boxes, scores):
         for i in range(min(max_boxes_to_draw, boxes.shape[0])):
@@ -130,9 +122,41 @@ def get_iris(image_file):
                 height = ymax - ymin
                 # This is the length of the iris that is obscured by the eyelids without regard to which end it is obscured
                 covered_length = 2*radius - (ymax-ymin)
-                return width, height, area, covered_length
+
+    (boxes, scores, classes, num) = sess.run(
+        [detection_boxes, detection_scores, detection_classes, num_detections],
+        feed_dict={image_tensor: image2_expanded}
+    )
+
+    # These are the values of the second eye's iris. If the second eye's iris isn't properly detected, the values will default to the firsts
+    if width != None:
+        width2 = width
+        height2 = height
+        area2 = area
+        covered_length2 = covered_length
+    max_boxes_to_draw = boxes.shape[0]
+    for box, score in zip(boxes, scores):
+        for i in range(min(max_boxes_to_draw, boxes.shape[0])):
+            if score[i] > min_score_thresh:
+                (xmin2, ymin2, xmax2, ymax2) = box[i]
+                radius2 = (xmax2 - xmin2)/2
+                area2 = math.pi * (radius2 ** 2)
+                width2 = xmax2 - xmin2
+                height2 = ymax2 - ymin2
+                # This is the length of the iris that is obscured by the eyelids without regard to which end it is obscured
+                covered_length2 = 2*radius2 - (ymax2-ymin2)
+
+    if width2 == None:
+        print(f"Error: Iris is not found in this image: {right_eye}")
+    elif width2 != None and width == None:
+        width = width2
+        height = height2
+        area = area2
+        covered_length = covered_length2
+
+    return width, height, area, covered_length, width2, height2, area2, covered_length2
 
 
 if __name__ == '__main__':
     args = build_arg_parser()
-    get_iris(args['image'])
+    get_iris(args['image'], args['image'])

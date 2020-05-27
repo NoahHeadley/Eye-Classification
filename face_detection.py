@@ -75,7 +75,6 @@ def get_face_features(predictor, image, wanted_part):
     image: input image
     wanted_part: a string dictating which facial feature that is wanted
     '''
-    # TODO: make this work with multiple faces. Currently goes out of bounds after 3 faces
     image_name = image
     directory = r'.'
     os.chdir(directory)
@@ -114,56 +113,20 @@ def get_face_features(predictor, image, wanted_part):
     wanted_part = str.lower(wanted_part)
     annoying_points = [21, 32, 43, 54, 65, 76, 87, 98, 109]
     wanted_list = []
-    head_list = [x for x in range(11)] + \
-        annoying_points + [x for x in range(114, 135)]
-    lip_list = [x for x in range(
-        11, 26) if x not in annoying_points] + [x for x in range(152, 194)]
-    top_lip_list = [x for x in range(
-        180, 194)] + [x for x in reversed(range(152, 166))]
-    bottom_lip_list = [x for x in range(
-        11, 26) if x not in annoying_points] + [x for x in reversed(range(166, 180))]
     r_eye_list = [x for x in range(26, 48) if x not in annoying_points]
     l_eye_list = [x for x in range(48, 70) if x not in annoying_points]
-    r_eyebrow_list = [x for x in range(70, 92) if x not in annoying_points]
-    l_eyebrow_list = [x for x in range(92, 114) if x not in annoying_points]
-    nose_list = range(135, 152)
     partnames_list = None
     all_mode = True
-    all_list = range(194)
-    if(wanted_part == "head"):
-        wanted_list.append(head_list)
-    elif(wanted_part == "lips"):
-        wanted_list.append(top_lip_list)
-        wanted_list.append(bottom_lip_list)
-    elif(wanted_part == "right eye"):
-        wanted_list.append(r_eye_list)
-    elif(wanted_part == "left eye"):
-        wanted_list.append(l_eye_list)
-    elif(wanted_part == "right eye brow"):
-        wanted_list.append(r_eyebrow_list)
-    elif(wanted_part == "left eye brow"):
-        wanted_list.append(l_eyebrow_list)
-    elif(wanted_part == "nose"):
-        wanted_list.append(nose_list)
-    elif(wanted_part == "all"):
-        wanted_list = [head_list, lip_list, top_lip_list, bottom_lip_list, r_eye_list,
-                       l_eye_list, r_eyebrow_list, l_eyebrow_list, nose_list]
-        partnames_list = ["head", "lips", "top_lip", "bottom_lip", "right_eye",
-                          "left_eye", "right_eye_brow", "left_eye_brow", "nose"]
-    elif(wanted_part == "eyes"):
+    all_list = r_eye_list + l_eye_list
+    if(wanted_part == "eyes"):
         wanted_list.append(r_eye_list)
         wanted_list.append(l_eye_list)
         partnames_list = ["right_eye", "left_eye"]
     else:
         print("""Input string must be one of the following
-        "head": Shape of head from left temple to right temple
-        "left eye brow": Left Eye Brow
-        "right eye brow": Right Eye Brow
-        "nose": Shape of Nose
         "left eye": Left Eye
         "right eye": Right eye
-        "lips": Lips
-        "all" : get all features""")
+        "eyes" : get both eyes""")
         return None
 
     # loop over detected faces
@@ -174,67 +137,28 @@ def get_face_features(predictor, image, wanted_part):
         shape = predictor(gray, rect)
         shape = face_utils.shape_to_np(shape)
 
-        # get center of face so that we can rotate
-        (img_w, img_h) = image.shape[: 2]
-        center = (img_w/2, img_h/2)
-
-        # Shape 0 and 134 values are the sides of the head right under forehead
-        (ang_x, ang_y) = shape[0] - shape[134]
-        angle = math.atan(ang_y/ang_x) * 180/math.pi
-
-        # rotate the face
-        M = cv2.getRotationMatrix2D(center, angle, 1.0)
-        image_rotate = cv2.warpAffine(image, M, (img_h, img_w))
-        # image_rotate = imutils.resize(image_rotate, width=500)
-
-        # Do calculations for faces again on the rotated face
-        gray_rotate = cv2.cvtColor(image_rotate, cv2.COLOR_BGR2GRAY)
-        rects_rotate = detector(gray_rotate)
-        # adjust shape values to the rotated image
-        if(all_mode):
-            shape = predictor(gray_rotate, rects_rotate[i])
-            shape = face_utils.shape_to_np(shape)
-            face_x, face_y = sys.maxsize, sys.maxsize
-            face_w, face_h = 0, 0
-
-            for(x, y) in shape[all_list]:
-                if(x < face_x):
-                    face_x = x
-                if(y < face_y):
-                    face_y = y
-            for(x, y) in shape[all_list]:
-                if(face_w < x - face_x):
-                    face_w = x - face_x
-                if(face_h < y - face_y):
-                    face_h = y - face_y
-
-            for j in range(0, int((shape.size)/2)):
-                (x, y) = shape[j]
-                x_norm = (x - face_x)/(face_w) * 1000
-                y_norm = (y - face_y)/(face_h) * 1000
-                shape[j] = (x_norm, y_norm)
+        face_x, face_y = sys.maxsize, sys.maxsize
+        face_w, face_h = 0, 0
 
         while(wanted_list.__len__() > 0):
             part_list = wanted_list.pop(0)
-            new_shape = predictor(gray_rotate, rects_rotate[i])
-            new_shape = face_utils.shape_to_np(new_shape)
             # values that will be used to find the perfect values for cropping face
             face_x, face_y = sys.maxsize, sys.maxsize
             face_w, face_h = 0, 0
             # loop over the (x,y)-coordinates for the facial landmarks and get the coordinates containing the points
-            for(x, y) in new_shape[part_list]:
+            for(x, y) in shape[part_list]:
                 if(x < face_x):
                     face_x = x
                 if(y < face_y):
                     face_y = y
-            for(x, y) in new_shape[part_list]:
+            for(x, y) in shape[part_list]:
                 if(face_w < x - face_x):
                     face_w = x - face_x
                 if(face_h < y - face_y):
                     face_h = y - face_y
             # crop out faces
-            cropped_face = image_rotate[face_y-30: face_y +
-                                        face_h+30, face_x-30: face_x + face_w+30]
+            cropped_face = image[face_y-30: face_y +
+                                 face_h+30, face_x-30: face_x + face_w+30]
             # cv2.waitKey(0)
             if(partnames_list is not None):
                 wanted_part = partnames_list.pop(0)
@@ -244,18 +168,30 @@ def get_face_features(predictor, image, wanted_part):
             filename = out_directory + f"/{image_name[6:]}"
             cv2.imwrite(filename, cropped_face)
 
-            # display an image of the wanted normalized values
-
-            # for j in part_list:
-            #     (x, y) = shape[j]
-            #     cv2.circle(image_rotate, (x, y), 1, (255, 255, 255), -1)
-            # cv2.imshow("normalized", image)
-            # cv2.waitKey(0)
-
             # Add the coordinates of all the wanted landmarks to a list
             shape[part_list].sort()
             faces_landmarks_collector.append(shape[part_list])
-    return faces_landmarks_collector
+
+    for(x, y) in shape[all_list]:
+        if(x < face_x):
+            face_x = x
+        if(y < face_y):
+            face_y = y
+    for(x, y) in shape[all_list]:
+        if(face_w < x - face_x):
+            face_w = x - face_x
+        if(face_h < y - face_y):
+            face_h = y - face_y
+
+    final_faces = []
+    for l in faces_landmarks_collector:
+        for j in range(0, int((l.size)/2)):
+            (x, y) = l[j]
+            x_norm = (x - face_x)/(face_w) * 1000
+            y_norm = (y - face_y)/(face_h) * 1000
+            l[j] = (x_norm, y_norm)
+        final_faces.append(l)
+    return final_faces
 
 
 if __name__ == '__main__':

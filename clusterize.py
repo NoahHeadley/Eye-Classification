@@ -8,6 +8,7 @@ import face_detection as fd
 import argparse
 import os
 import math
+from datetime import datetime
 
 
 def build_arg_parser():
@@ -32,12 +33,9 @@ def get_eye_info(right_eye, left_eye, image):
     image (String): The filename of the image
     """
     area_1 = fd.find_area(right_eye)
-    width_1, height_1, iris_area_1, covered_1 = iris.get_iris(
-        f"crops/right_eye/{image}")
-
     area_2 = fd.find_area(left_eye)
-    width_2, height_2, iris_area_2, covered_2 = iris.get_iris(
-        f"crops/left_eye/{image}")
+    width_1, height_1, iris_area_1, covered_1, width_2, height_2, iris_area_2, covered_2 = iris.get_iris(
+        f"crops/right_eye/{image}", f"crops/left_eye/{image}")
 
     return area_1, area_2, width_1, width_2, height_1, height_2, iris_area_1, iris_area_2, covered_1, covered_2
 
@@ -47,13 +45,16 @@ if __name__ == '__main__':
     shape_predictor = args["shape_predictor"]
 
     path = 'faces/'
-    directory = os.fsencode("faces")
+    directory = os.listdir(os.fsencode("faces"))
     out_file = open('eyes.txt', 'w')
     num_variables = 11
     num_clusters = math.ceil(math.sqrt(len(directory)))
     out_file.write(
         f"{len(directory)} {num_variables} {num_clusters}\n")
-    for file in os.listdir(directory):
+    count = 1
+    total = len(directory)
+    start = datetime.now()
+    for file in directory:
         image = os.fsdecode(file)
         face = fd.get_face_features(shape_predictor, path + image, 'eyes')
         right_eye = face[0]
@@ -64,4 +65,9 @@ if __name__ == '__main__':
                         left_eye[0, 0], left_eye[0, 1])
         out_file.write(
             f"{area_1} {area_2} {width_1} {width_2} {height_1} {height_2} {iris_area_1} {iris_area_2} {covered_1} {covered_2} {dist}\n")
+        time_elapsed = datetime.now() - start
+        average_time = time_elapsed/count
+        print(
+            f"Done: {count} / {total} = {round(float(count/total) * 100, 2)}%\tTime Elapsed:{time_elapsed}\tAverage Time: {average_time}")
+        count += 1
     out_file.close()
