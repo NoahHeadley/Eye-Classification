@@ -17,6 +17,8 @@ run the following commands
 
 With this, your virtual environment is set up for this project.
 
+Open up faces.rar and unpack it into a folder named 'faces'.
+
 # Usage
 
 This program requires a Dlib shape predictor trained to find landmarks for faces. Included is a 194 landmark detector but any face detector that finds landmarks for the eyes will work but will require manipulating face_detection.py accordingly.
