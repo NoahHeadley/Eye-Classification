@@ -1,3 +1,7 @@
+# Version
+
+This is the Apache version of the Eye Classification. It utilizes much more computing power but is able to do all the calculations in much faster times than the master version.
+
 # Installation
 
 ## Windows
@@ -13,7 +17,7 @@ run the following commands
 
 > conda activate eyes
 
-> pip install opencv-python cmake dlib imutils matplotlib cython pillow
+> pip install opencv-python cmake dlib imutils matplotlib cython pillow pyspark
 
 With this, your virtual environment is set up for this project.
 
